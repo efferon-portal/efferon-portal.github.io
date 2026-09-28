@@ -1,0 +1,59 @@
+/* Shared type + form system for the request-access variants.
+   Brand: Gotham Pro (300/400/500 only), navy ink, brandbook gradient image. */
+@font-face{font-family:"Gotham Pro";src:url("assets/gothampro_light.ttf") format("truetype");font-weight:300;font-display:swap}
+@font-face{font-family:"Gotham Pro";src:url("assets/gothampro.ttf") format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Gotham Pro";src:url("assets/gothampro_medium.ttf") format("truetype");font-weight:500;font-display:swap}
+
+:root{
+  --ink:#2b2f56; --ink-2:#555a7e; --ink-3:#8a8eab;
+  --blue:#4568a9; --violet:#896896; --coral:#e16f79;
+  --line:rgba(43,47,86,.12); --fill:rgba(43,47,86,.045);
+  --grad:linear-gradient(100deg,#4568a9 0%,#896896 55%,#e16f79 100%);
+  --ease:cubic-bezier(.22,.9,.28,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Gotham Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-weight:400;color:var(--ink);background:#f6f5f9;-webkit-font-smoothing:antialiased;line-height:1.55}
+a{color:inherit}
+
+.logo{display:block;height:28px;width:auto}
+
+.title{font-weight:300;font-size:40px;line-height:1.1;letter-spacing:-.025em;margin:0 0 14px}
+.lede{font-weight:300;font-size:16px;color:var(--ink-2);margin:0 0 34px;max-width:40ch}
+@media(max-width:520px){.title{font-size:32px}.lede{font-size:15px;margin-bottom:28px}}
+
+.row{display:flex;gap:12px}
+@media(max-width:430px){.row{flex-direction:column;gap:0}}
+.f{flex:1;margin:0 0 12px;position:relative}
+.f label{display:block;font-size:13px;font-weight:400;color:var(--ink-2);margin:0 0 7px;padding-left:2px}
+.f input{width:100%;font:inherit;font-size:16px;font-weight:400;color:var(--ink);
+  background:var(--fill);border:1px solid transparent;border-radius:14px;padding:14px 16px;outline:none;
+  transition:border-color .2s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease)}
+.f input::placeholder{color:var(--ink-3);font-weight:300}
+.f input:hover{background:rgba(43,47,86,.065)}
+.f input:focus{background:#fff;border-color:rgba(69,104,169,.45);box-shadow:0 0 0 4px rgba(69,104,169,.10)}
+.f input.bad{border-color:rgba(225,111,121,.7)}
+
+.note{font-size:13px;font-weight:300;color:var(--ink-2);margin:10px 0 26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;cursor:pointer;
+  font:inherit;font-size:16px;font-weight:500;letter-spacing:.005em;color:#fff;border:0;border-radius:999px;
+  padding:16px 28px;background:var(--ink);transition:transform .2s var(--ease),opacity .2s,box-shadow .2s var(--ease)}
+.btn:hover{transform:translateY(-1px)}
+.btn[disabled]{opacity:.6;cursor:progress;transform:none}
+.btn .arr{transition:transform .2s var(--ease)}
+.btn:hover .arr{transform:translateX(3px)}
+.err{display:none;font-size:13px;color:#b8434f;margin:14px 0 0}
+.fail .err{display:block}
+.alt{font-size:14px;font-weight:300;color:var(--ink-2);margin:22px 0 0;text-align:center}
+.alt a{font-weight:400;color:var(--blue);text-decoration:none;border-bottom:1px solid rgba(69,104,169,.3)}
+
+.trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sent{display:none}
+.done form{display:none}
+.done .sent{display:block;animation:rise .5s var(--ease)}
+.sent .tick{width:56px;height:56px;border-radius:50%;background:var(--grad);display:flex;align-items:center;
+  justify-content:center;margin:0 0 26px}
+.sent .tick svg{width:24px;height:24px}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

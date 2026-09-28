@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Request access — Efferon Knowledge Portal</title><meta name="robots" content="noindex">
+<link rel="stylesheet" href="common.css">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<script>
+  /* THE ONE THING TO SET: the Apps Script web app /exec URL. Empty = demo mode, nothing is sent. */
+  window.EFR_ENDPOINT = "";
+</script><style>
+body{background:#fff}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:100vh}
+.art{position:relative;background:#4568a9 url("assets/gradient-flip.jpg") center/cover;color:#fff;padding:40px 48px;
+  display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.art .logo{align-self:flex-start}
+.art h2{font-weight:300;font-size:52px;line-height:1.04;letter-spacing:-.03em;margin:0 0 18px;max-width:11ch}
+.art p{font-weight:300;font-size:16px;margin:0;max-width:36ch;opacity:.92}
+.side{display:flex;flex-direction:column;justify-content:center;padding:48px 8vw 32px}
+#box{width:100%;max-width:440px}
+.foot{font-size:12.5px;font-weight:300;color:var(--ink-3);margin:48px 0 0}
+.foot a{text-decoration:none}
+.btn{background:var(--grad)}
+.side .alt{text-align:left}
+@media(max-width:860px){.split{grid-template-columns:1fr;min-height:0}
+  .art{min-height:280px;padding:24px 22px;background:linear-gradient(0deg,rgba(43,47,86,.38),rgba(43,47,86,0) 70%),#4568a9 url("assets/gradient-wide.jpg") center/cover}.art .logo{align-self:flex-start}
+.art h2{font-size:34px}.logo{height:24px}
+  .side{padding:36px 22px 28px}#box{max-width:none}}
+
+.combo .chev{position:absolute;right:18px;top:45px;width:8px;height:8px;border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);transform:rotate(45deg);pointer-events:none;transition:transform .2s var(--ease)}
+.combo.open .chev{transform:translateY(4px) rotate(-135deg)}
+.combo input#company{padding-right:44px}
+.list{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 6px);margin:0;padding:6px;list-style:none;background:#fff;
+  border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 48px -24px rgba(43,47,86,.35);max-height:292px;overflow:auto}
+.list li{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15px}
+.list li .c{font-size:12.5px;font-weight:300;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.list li[aria-selected="true"],.list li:hover{background:var(--fill)}
+.list li.add{color:var(--blue);border-top:1px solid var(--line);border-radius:0 0 10px 10px;margin-top:4px;padding-top:13px}
+.list li.add:first-child{border-top:0;margin-top:0;border-radius:10px}
+.list li.empty{color:var(--ink-3);font-weight:300;cursor:default;background:none}
+.list mark{background:none;color:inherit;font-weight:500}
+.newtag{display:none;font-size:12.5px;font-weight:300;color:var(--ink-2);margin:7px 0 0 2px}
+.combo.is-new .newtag{display:block}
+</style></head><body><div class="split">
+<aside class="art"><img class="logo" src="assets/logo-white.svg" alt="Efferon">
+  <div><h2>Knowledge Portal</h2><p>Training, clinical evidence and sales materials for Efferon partners, in one place.</p></div></aside>
+<main class="side"><section id="box"><form id="form" novalidate>
+  <div class="trap" aria-hidden="true"><label for="hp">Leave empty</label><input id="hp" name="hp" tabindex="-1" autocomplete="off"></div>
+  <h1 class="title">Request access</h1>
+  <p class="lede">Tell us who you are and we will open an account for you.</p>
+  <div class="row">
+    <div class="f"><label for="first">First name</label><input id="first" name="first_name" required autocomplete="given-name" placeholder="Anna"></div>
+    <div class="f"><label for="last">Last name</label><input id="last" name="last_name" required autocomplete="family-name" placeholder="Rossi"></div>
+  </div>
+  <div class="f combo" id="combo">
+    <label for="company">Company</label>
+    <input id="company" name="company" required autocomplete="off" placeholder="Start typing your company"
+      role="combobox" aria-expanded="false" aria-controls="company-list" aria-autocomplete="list">
+    <input type="hidden" name="company_listed" id="company_listed" value="">
+    <span class="chev" aria-hidden="true"></span>
+    <p class="newtag">New company &mdash; we'll add it to our list.</p>
+    <ul class="list" id="company-list" role="listbox" hidden></ul>
+  </div>
+  <div class="f"><label for="email">Work e-mail</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="name@company.com"></div>
+  <p class="note">We'll send your sign-in link to this address.</p>
+  <button class="btn" id="send" type="submit">Send request <span class="arr">&rarr;</span></button>
+  <p class="err" role="alert">The request didn't reach us. Please try again in a minute, or write to <a href="mailto:info@efferon.com">info@efferon.com</a>.</p>
+</form>
+<div class="sent" role="status">
+  <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+  <h1 class="title">Thank you</h1>
+  <p class="lede">We've received your request. Your sign-in link will arrive at the address you gave us &mdash; usually within one working day.</p>
+</div><p class="alt">Already have an account? <a href="https://efferon.zendesk.com/hc/en-001">Sign in</a></p></section>
+<p class="foot">Efferon O&Uuml; &middot; Tallinn, Estonia &middot; <a href="mailto:info@efferon.com">info@efferon.com</a></p></main></div>
+<script>
+(function () {
+  var ENDPOINT = window.EFR_ENDPOINT;
+  var form = document.getElementById("form"), box = document.getElementById("box"), btn = document.getElementById("send");
+  form.addEventListener("input", function (e) { e.target.classList.remove("bad"); });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var bad = [].filter.call(form.querySelectorAll("input[required]"), function (i) { return !i.checkValidity() || !i.value.trim(); });
+    bad.forEach(function (i) { i.classList.add("bad"); });
+    if (bad.length) { bad[0].focus(); return; }
+    box.classList.remove("fail"); btn.disabled = true; btn.firstChild.nodeValue = "Sending… ";
+    var data = {}; new FormData(form).forEach(function (v, k) { data[k] = String(v).trim(); });
+    var done = function () { box.classList.add("done"); };
+    if (!ENDPOINT) { setTimeout(done, 700); return; }
+    // text/plain = a "simple" request, no CORS preflight (Apps Script cannot answer one).
+    fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (res && res.ok) done(); else throw 0; })
+      .catch(function () { box.classList.add("fail"); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; });
+  });
+})();
+</script><script>
+/* Company picker. The list comes from the Platform Access sheet via the Apps Script (GET ?list=companies),
+   so it updates by itself whenever the sheet changes. DEMO below is used only while ENDPOINT is empty. */
+(function () {
+  var ENDPOINT = window.EFR_ENDPOINT;
+  var DEMO = [{"name": "Medigroup Australia Pty Ltd", "country": "Australia"}, {"name": "Min Medical GmbH", "country": "Austria"}, {"name": "SaniMed EOD", "country": "Bulgaria"}, {"name": "Meditrade Ltd.", "country": "Czech Republic, Slovakia"}, {"name": "Efferon OÜ", "country": "Estonia, Latvia"}, {"name": "DIAMED medTEC GmbH", "country": "Germany"}, {"name": "Verma Drungs SA", "country": "Greece"}, {"name": "Medial Kft", "country": "Hungary"}, {"name": "Helmier Private Limited", "country": "India"}, {"name": "Systemedic Ltd.", "country": "Israel"}, {"name": "Gada Italia", "country": "Italy"}, {"name": "EXPERTS MED TRADING CO. L.L.C", "country": "Egypt, South Africa, UAE, Kuwait, Morocco, Libya, Oman, Qatar, Bahrain, Kingdom of Saudi Arabia"}, {"name": "US Pharmacy Systems INC", "country": "Panama, Costa Rica, Paraguay"}, {"name": "West Medical", "country": "Poland"}, {"name": "Smart Medical Solutions SRL", "country": "Romania, Moldova"}, {"name": "Medicon doo Dec", "country": "Serbia, Bosnia and Herzegovina, Montenegro"}, {"name": "Bertossi Co. Ltd.", "country": "Slovenia, Croatia, Cyprus"}, {"name": "7medikal", "country": "Turkey"}, {"name": "Minchoo JSC.", "country": "Vietnam"}, {"name": "NorrDia AB", "country": "United Kingdom, Ireland, Spain, Thailand, Colombia"}, {"name": "Marg Pharm", "country": "Armenia"}, {"name": "MayaMed", "country": "Georgia"}, {"name": "Litfarma", "country": "Lithuania"}, {"name": "Sanovie", "country": "Brazil"}];
+  var box = document.getElementById("combo"), input = document.getElementById("company"),
+      listed = document.getElementById("company_listed"), ul = document.getElementById("company-list");
+  var all = [], active = -1, items = [];
+  function norm(s) { return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function hi(name, q) {
+    if (!q) return esc(name);
+    var i = name.toLowerCase().indexOf(q.toLowerCase());
+    return i < 0 ? esc(name) : esc(name.slice(0, i)) + "<mark>" + esc(name.slice(i, i + q.length)) + "</mark>" + esc(name.slice(i + q.length));
+  }
+  function load(list) {
+    var seen = {};   // one entry per company, even when the sheet has it on two rows (NorrDia)
+    all = list.filter(function (c) { var k = norm(c.name); if (!k || seen[k]) return false; seen[k] = 1; return true; })
+              .sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+  function render() {
+    var q = input.value.trim(), nq = norm(q);
+    var hits = all.filter(function (c) { return !nq || norm(c.name).indexOf(nq) >= 0 || norm(c.country).indexOf(nq) >= 0; });
+    var exact = all.some(function (c) { return norm(c.name) === nq; });
+    items = hits.map(function (c) { return { name: c.name, html: '<span>' + hi(c.name, q) + '</span><span class="c">' + esc(c.country) + '</span>' }; });
+    if (q && !exact) items.push({ name: q, isNew: true, html: '+ Add &ldquo;' + esc(q) + '&rdquo; as a new company' });
+    ul.innerHTML = items.length ? items.map(function (it, i) {
+      return '<li role="option" id="opt' + i + '" class="' + (it.isNew ? "add" : "") + '" aria-selected="' + (i === active) + '">' + it.html + '</li>';
+    }).join("") : '<li class="empty">Type your company name</li>';
+  }
+  function open() { if (box.classList.contains("open")) return; box.classList.add("open"); ul.hidden = false; input.setAttribute("aria-expanded", "true"); }
+  function close() { box.classList.remove("open"); ul.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; }
+  function pick(it) {
+    input.value = it.name; listed.value = it.isNew ? "no" : "yes";
+    box.classList.toggle("is-new", !!it.isNew); input.classList.remove("bad"); close();
+  }
+  function commitTyped() {   // typed without choosing: treat an exact name as listed, anything else as new
+    var nq = norm(input.value); if (!nq) { listed.value = ""; box.classList.remove("is-new"); return; }
+    var m = all.filter(function (c) { return norm(c.name) === nq; })[0];
+    pick(m ? { name: m.name } : { name: input.value.trim(), isNew: true });
+  }
+  input.addEventListener("focus", function () { active = -1; render(); open(); });
+  input.addEventListener("input", function () { listed.value = ""; box.classList.remove("is-new"); active = -1; render(); open(); });
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); open(); if (!items.length) return;
+      active = (active + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; render();
+      input.setAttribute("aria-activedescendant", "opt" + active);
+      var el = document.getElementById("opt" + active); if (el) el.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter" && box.classList.contains("open") && active >= 0) { e.preventDefault(); pick(items[active]); }
+    else if (e.key === "Escape") { close(); }
+  });
+  ul.addEventListener("mousedown", function (e) {   // mousedown beats the input's blur
+    var li = e.target.closest("li[role=option]"); if (!li) return;
+    e.preventDefault(); pick(items[+li.id.slice(3)]);
+  });
+  input.addEventListener("blur", function () { setTimeout(function () { if (box.classList.contains("open")) { close(); commitTyped(); } }, 0); });
+  load(DEMO);
+  if (ENDPOINT) fetch(ENDPOINT + "?list=companies").then(function (r) { return r.json(); })
+    .then(function (res) { if (res && res.companies && res.companies.length) load(res.companies); }).catch(function () {});
+})();
+</script></body></html>
