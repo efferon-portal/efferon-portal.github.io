@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open access — Efferon Knowledge Portal</title><meta name="robots" content="noindex">
+<link rel="stylesheet" href="common.css"><link rel="icon" type="image/png" href="assets/icon.png">
+<style>
+body{background:#f6f5f9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 16px}
+.card{width:100%;max-width:480px;background:#fff;border-radius:28px;padding:40px 36px;border:1px solid rgba(43,47,86,.06)}
+.bar{height:4px;border-radius:4px;background:var(--grad);margin:0 0 28px}
+.who{margin:0 0 6px;font-size:18px}.who small{display:block;font-size:14px;color:var(--ink-2);font-weight:300;margin-top:4px}
+.m{font-size:14px;font-weight:300;color:var(--ink-2);margin:14px 0 26px}
+.btn{background:var(--grad)} .out{font-size:14.5px;margin:18px 0 0}
+.out.bad{color:#b8434f}
+@media(max-width:520px){.card{padding:32px 22px;border-radius:24px}}
+</style></head>
+<body><main class="card" id="card"><div class="bar"></div>
+<h1 class="title" id="t">Loading…</h1>
+<div id="body"></div>
+</main>
+<script>
+(function () {
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbwA4R2Y06yrpZUM4Wtc3-V6UMPT6LS720yBnp18t4ugmkj6N6WC5tId-gXbaFoqSQMUMw/exec";
+  var q = new URLSearchParams(location.search), e = q.get("e") || "", s = q.get("s") || "";
+  var T = document.getElementById("t"), B = document.getElementById("body");
+  function esc(x) { var d = document.createElement("div"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
+  function show(title, html) { T.textContent = title; B.innerHTML = html; }
+  function getJSON(url, opt) { return fetch(url, opt).then(function (r) { return r.json(); }); }
+  if (!e || !s) return show("This link is not valid", '<p class="m">Open it again from the notification e-mail.</p>');
+  getJSON(ENDPOINT + "?a=who&e=" + encodeURIComponent(e) + "&s=" + encodeURIComponent(s)).then(function (w) {
+    if (!w || !w.ok) return show("This link is not valid", '<p class="m">It may have been copied incompletely. Open it again from the notification e-mail.</p>');
+    var who = '<p class="who">' + esc(w.name || w.email) + '<small>' + esc(w.email) + (w.company ? " · " + esc(w.company) : "") + '</small></p>';
+    if (w.done) return show("Already done", who + '<p class="m">They already have access (' + esc(w.status) + ').</p>');
+    if (!w.inSheet) return show("Request not found", who + '<p class="m">This request is no longer in Platform Access (deleted = declined). Nothing was opened.</p>');
+    show("Open access?", who + '<p class="m">Zendesk will create the account and send its own &ldquo;set your password&rdquo; e-mail. At first sign-in they accept the Terms of Use.</p>' +
+      '<button class="btn" id="go">Open access <span class="arr">&rarr;</span></button><p class="out" id="out"></p>');
+    var go = document.getElementById("go"), out = document.getElementById("out");
+    go.addEventListener("click", function () {
+      go.disabled = true; go.firstChild.nodeValue = "Opening… ";
+      getJSON(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "approve", e: e, s: s }) })
+        .then(function (r) {
+          if (r && r.ok) { go.style.display = "none"; out.className = "out"; out.textContent = r.message; T.textContent = "Done"; }
+          else throw new Error(r && r.error || "failed");
+        })
+        .catch(function (err) { out.className = "out bad"; out.textContent = "Did not work: " + err.message + ". Try again in a minute."; go.disabled = false; go.firstChild.nodeValue = "Open access "; });
+    });
+  }).catch(function () { show("Could not load", '<p class="m">The server did not answer. Reload the page in a minute.</p>'); });
+})();
+</script></body></html>
