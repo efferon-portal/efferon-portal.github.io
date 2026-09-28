@@ -87,7 +87,11 @@ body{background:#fff}
     // text/plain = a "simple" request, no CORS preflight (Apps Script cannot answer one).
     fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) })
       .then(function (r) { return r.json(); })
-      .then(function (res) { if (res && res.ok) done(); else throw 0; })
+      .then(function (res) {
+        if (res && res.ok) return done();
+        if (res && res.error === "email") { var em = document.getElementById("email"); em.classList.add("bad"); em.focus(); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; return; }
+        throw 0;
+      })
       .catch(function () { box.classList.add("fail"); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; });
   });
 })();
@@ -142,6 +146,7 @@ body{background:#fff}
       input.setAttribute("aria-activedescendant", "opt" + active);
       var el = document.getElementById("opt" + active); if (el) el.scrollIntoView({ block: "nearest" });
     } else if (e.key === "Enter" && box.classList.contains("open") && active >= 0) { e.preventDefault(); pick(items[active]); }
+    else if (e.key === "Enter") { close(); commitTyped(); }   /* then the form submits with the company settled */
     else if (e.key === "Escape") { close(); }
   });
   ul.addEventListener("mousedown", function (e) {   // mousedown beats the input's blur
