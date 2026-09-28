@@ -66,8 +66,8 @@ body{background:#fff}
 </form>
 <div class="sent" role="status">
   <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-  <h1 class="title">Thank you</h1>
-  <p class="lede">We've received your request. Your sign-in link will arrive at the address you gave us &mdash; usually within one working day.</p>
+  <h1 class="title" id="sent-title">Thank you</h1>
+  <p class="lede" id="sent-text">We've received your request and will review it. You'll get a sign-in e-mail at the address you gave us, usually within one working day.</p>
 </div><p class="alt">Already have an account? <a href="https://efferon.zendesk.com/hc/en-001">Sign in</a></p></section>
 <p class="foot">Efferon O&Uuml; &middot; Tallinn, Estonia &middot; <a href="mailto:info@efferon.com">info@efferon.com</a></p></main></div>
 <script>
@@ -82,7 +82,21 @@ body{background:#fff}
     if (bad.length) { bad[0].focus(); return; }
     box.classList.remove("fail"); btn.disabled = true; btn.firstChild.nodeValue = "Sending… ";
     var data = {}; new FormData(form).forEach(function (v, k) { data[k] = String(v).trim(); });
-    var done = function () { box.classList.add("done"); };
+    var TEXT = {
+      granted: ["Check your inbox", "Your account is ready. An e-mail from Efferon Knowledge Portal is on its way to " +
+                "<b></b> &mdash; open it to set your password. It can take a few minutes; please check the spam folder too."],
+      exists:  ["You already have an account", "This address is already registered on the portal. " +
+                "<a href=\"https://efferon.zendesk.com/hc/en-001\">Sign in</a> &mdash; or use &ldquo;Forgot password&rdquo; on the sign-in page if you need a new one."]
+    };
+    var done = function (result) {
+      var t = TEXT[result];
+      if (t) {
+        document.getElementById("sent-title").textContent = t[0];
+        var p = document.getElementById("sent-text"); p.innerHTML = t[1];
+        var b = p.querySelector("b"); if (b) b.textContent = data.email;
+      }
+      box.classList.add("done");
+    };
     if (!ENDPOINT) { setTimeout(done, 700); return; }
     /* Apps Script usually answers in 2-3 s but now and then takes 10+: say so instead of looking frozen,
        and give up after a minute (a retry is safe - the script folds repeats of one e-mail into one row). */
@@ -95,7 +109,7 @@ body{background:#fff}
       .then(function (r) { return r.json(); })
       .then(function (res) {
         settle();
-        if (res && res.ok) return done();
+        if (res && res.ok) return done(res.result);
         if (res && res.error === "email") { var em = document.getElementById("email"); em.classList.add("bad"); em.focus(); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; return; }
         throw 0;
       })
