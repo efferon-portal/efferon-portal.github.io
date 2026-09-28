@@ -84,15 +84,22 @@ body{background:#fff}
     var data = {}; new FormData(form).forEach(function (v, k) { data[k] = String(v).trim(); });
     var done = function () { box.classList.add("done"); };
     if (!ENDPOINT) { setTimeout(done, 700); return; }
+    /* Apps Script usually answers in 2-3 s but now and then takes 10+: say so instead of looking frozen,
+       and give up after a minute (a retry is safe - the script folds repeats of one e-mail into one row). */
+    var slow = setTimeout(function () { btn.firstChild.nodeValue = "Still sending, a few more seconds… "; }, 5000);
+    var ctl = window.AbortController ? new AbortController() : null;
+    var cut = setTimeout(function () { if (ctl) ctl.abort(); }, 60000);
+    var settle = function () { clearTimeout(slow); clearTimeout(cut); };
     // text/plain = a "simple" request, no CORS preflight (Apps Script cannot answer one).
-    fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) })
+    fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data), signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
       .then(function (res) {
+        settle();
         if (res && res.ok) return done();
         if (res && res.error === "email") { var em = document.getElementById("email"); em.classList.add("bad"); em.focus(); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; return; }
         throw 0;
       })
-      .catch(function () { box.classList.add("fail"); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; });
+      .catch(function () { settle(); box.classList.add("fail"); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; });
   });
 })();
 </script><script>
