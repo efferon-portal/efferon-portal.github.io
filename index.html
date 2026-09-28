@@ -20,6 +20,8 @@ body{background:#fff}
 .foot a{text-decoration:none}
 .btn{background:var(--grad)}
 .side .alt{text-align:left}
+#form .title{margin-bottom:34px}
+@media(max-width:860px){#form .title{margin-bottom:26px}}
 @media(max-width:860px){.split{grid-template-columns:1fr;min-height:0}
   .art{min-height:280px;padding:24px 22px;background:linear-gradient(0deg,rgba(43,47,86,.38),rgba(43,47,86,0) 70%),#4568a9 url("assets/gradient-wide.jpg") center/cover}.art .logo{align-self:flex-start}
 .art h2{font-size:34px}.logo{height:24px}
@@ -45,7 +47,7 @@ body{background:#fff}
 <main class="side"><section id="box"><form id="form" novalidate>
   <div class="trap" aria-hidden="true"><label for="hp">Leave empty</label><input id="hp" name="hp" tabindex="-1" autocomplete="off"></div>
   <h1 class="title">Request access</h1>
-  <p class="lede">Tell us who you are and we will open an account for you.</p>
+  
   <div class="row">
     <div class="f"><label for="first">First name</label><input id="first" name="first_name" required autocomplete="given-name" placeholder="Anna"></div>
     <div class="f"><label for="last">Last name</label><input id="last" name="last_name" required autocomplete="family-name" placeholder="Rossi"></div>
