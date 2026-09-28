@@ -75,13 +75,22 @@ body{background:#fff}
   var ENDPOINT = window.EFR_ENDPOINT;
   var form = document.getElementById("form"), box = document.getElementById("box"), btn = document.getElementById("send");
   form.addEventListener("input", function (e) { e.target.classList.remove("bad"); });
+  function rid() {
+    var a = new Uint8Array(12), s = "";
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    for (var i = 0; i < a.length; i++) s += ("0" + a[i].toString(16)).slice(-2);
+    return s;
+  }
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    var em0 = document.getElementById("email");   /* clean before the browser judges it: iOS can slip in invisible characters */
+    em0.value = em0.value.replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\u00A0/g, " ").trim();
     var bad = [].filter.call(form.querySelectorAll("input[required]"), function (i) { return !i.checkValidity() || !i.value.trim(); });
     bad.forEach(function (i) { i.classList.add("bad"); });
     if (bad.length) { bad[0].focus(); return; }
     box.classList.remove("fail"); btn.disabled = true; btn.firstChild.nodeValue = "Sending… ";
     var data = {}; new FormData(form).forEach(function (v, k) { data[k] = String(v).trim(); });
+    data.email = (data.email || "").replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").replace(/\u00A0/g, " ").trim();
     var TEXT = {
       granted: ["Check your inbox", "Your account is ready. An e-mail from Efferon Knowledge Portal is on its way to " +
                 "<b></b> &mdash; open it to set your password. It can take a few minutes; please check the spam folder too."],
@@ -98,22 +107,38 @@ body{background:#fff}
       box.classList.add("done");
     };
     if (!ENDPOINT) { setTimeout(done, 700); return; }
-    /* Apps Script usually answers in 2-3 s but now and then takes 10+: say so instead of looking frozen,
-       and give up after a minute (a retry is safe - the script folds repeats of one e-mail into one row). */
-    var slow = setTimeout(function () { btn.firstChild.nodeValue = "Still sending, a few more seconds… "; }, 5000);
-    var ctl = window.AbortController ? new AbortController() : null;
-    var cut = setTimeout(function () { if (ctl) ctl.abort(); }, 60000);
-    var settle = function () { clearTimeout(slow); clearTimeout(cut); };
+    /* Apps Script answers in 1-3 s most of the time, but now and then takes 20-40 s, or the answer is lost on a
+       phone network even though the row WAS written. So the request carries a random receipt id, and if the answer
+       is slow or fails the page asks the script whether that receipt arrived. "It didn't reach us" is shown only
+       when, two minutes on, the script still has no record of it. A retry is always safe: repeats of one e-mail
+       fold into one row. */
+    data.rid = rid();
+    var finished = false, polling = false, t0 = Date.now(), timers = [];
+    var later = function (fn, ms) { timers.push(setTimeout(fn, ms)); };
+    var finish = function (fn) { if (finished) return; finished = true; timers.forEach(clearTimeout); fn(); };
+    var reset = function () { btn.disabled = false; btn.firstChild.nodeValue = "Send request "; };
+    var fail = function () { finish(function () { box.classList.add("fail"); reset(); }); };
+    later(function () { btn.firstChild.nodeValue = "Still sending, a few more seconds\u2026 "; }, 5000);
+    later(function () { btn.firstChild.nodeValue = "Almost there, confirming\u2026 "; }, 20000);
+    var poll = function () {
+      if (finished) return;
+      if (Date.now() - t0 > 120000) return fail();
+      fetch(ENDPOINT + "?receipt=" + data.rid).then(function (r) { return r.json(); })
+        .then(function (res) { if (res && res.received) finish(function () { done(res.result); }); else later(poll, 4000); })
+        .catch(function () { later(poll, 4000); });
+    };
+    var startPolling = function (ms) { if (polling) return; polling = true; later(poll, ms); };
+    later(function () { startPolling(0); }, 12000);   /* the answer is late: start asking */
     // text/plain = a "simple" request, no CORS preflight (Apps Script cannot answer one).
-    fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data), signal: ctl ? ctl.signal : undefined })
+    fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) })
       .then(function (r) { return r.json(); })
       .then(function (res) {
-        settle();
-        if (res && res.ok) return done(res.result);
-        if (res && res.error === "email") { var em = document.getElementById("email"); em.classList.add("bad"); em.focus(); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; return; }
+        if (res && res.ok) return finish(function () { done(res.result); });
+        if (res && res.error === "email") return finish(function () { var em = document.getElementById("email"); em.classList.add("bad"); em.focus(); reset(); });
+        if (res && res.error) return fail();   /* a definite no from the script */
         throw 0;
       })
-      .catch(function () { settle(); box.classList.add("fail"); btn.disabled = false; btn.firstChild.nodeValue = "Send request "; });
+      .catch(function () { if (!finished) startPolling(1500); });   /* lost answer: ask about the receipt instead */
   });
 })();
 </script><script>
